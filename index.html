@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="icon" href="data:,">
+<title>Paul's Boutique Anatomy — every sample, on the clock</title>
+<meta name="description" content="An interactive anatomy of Paul's Boutique (Beastie Boys, 1989): 125 documented samples mapped across the album's 53 minutes. Starts verified via WhoSampled; audio is the official YouTube uploads, chained.">
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#0b0b0e; --panel:#141419; --panel2:#1a1a21; --ink:#ece7dd; --dim:#9b968a;
+    --faint:#6d6a61; --line:#26262e; --accent:#ffb43a; --accent2:#ff5d3a;
+    --rail:#26262e; --tick:#3a3a44; --transport-bg:rgba(11,11,14,.92); --tip-bg:#000;
+    --row-line:#1e1e26; --row-hover:#191920; --playing-bg:#221d12; --head:#fff;
+    --band-a:rgba(255,255,255,0.045); --band-b:rgba(255,255,255,0.022); --axis-ink:rgba(236,231,221,0.55);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      color-scheme:light;
+      --bg:#f0efe9; --panel:#fbfaf6; --panel2:#eceade; --ink:#211d15; --dim:#5d594e;
+      --faint:#8a8578; --line:#d8d4c6; --accent:#c47f06; --accent2:#d63f1e;
+      --rail:#d8d4c6; --tick:#bdb8a6; --transport-bg:rgba(240,239,233,.94); --tip-bg:#211d15;
+      --row-line:#e6e2d4; --row-hover:#f3f1e7; --playing-bg:#fdf3d7; --head:#211d15;
+      --band-a:rgba(33,29,21,0.05); --band-b:rgba(33,29,21,0.025); --axis-ink:rgba(33,29,21,0.55);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-system,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1060px;margin:0 auto;padding:22px 16px 60px}
+  header.masthead{padding:10px 2px 4px}
+  .kicker{letter-spacing:.22em;font-size:11px;color:var(--accent);text-transform:uppercase;font-weight:700}
+  h1{font-size:clamp(30px,5.4vw,52px);line-height:1.02;margin:.18em 0 .12em;font-weight:800;letter-spacing:-.01em}
+  h1 .thin{color:var(--dim);font-weight:300}
+  .sub{color:var(--dim);font-size:15px;max-width:72ch;line-height:1.5}
+  .sub b{color:var(--ink)}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--dim)}
+  .stat b{color:var(--ink);font-size:13.5px}
+
+  /* transport */
+  .transport{position:sticky;top:0;z-index:40;background:var(--transport-bg);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);margin:16px -16px 0;padding:12px 16px}
+  .trow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #playBtn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;flex:0 0 auto;
+    background:var(--accent);color:#171106;font-size:21px;font-weight:800;display:grid;place-items:center;
+    box-shadow:0 4px 18px rgba(255,180,58,.35)}
+  #playBtn:hover{background:#ffc35e}
+  .clock{font-variant-numeric:tabular-nums;font-size:15px;color:var(--dim);white-space:nowrap}
+  .clock b{color:var(--ink);font-size:17px}
+  .nowtrack{min-width:0;flex:1 1 180px}
+  .nowtrack .nt-label{font-size:10.5px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
+  .nowtrack .nt-name{font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nowtrack .nt-part{color:var(--dim);font-weight:500;font-size:13.5px}
+  .seekbar{position:relative;height:30px;margin-top:10px;cursor:pointer;touch-action:none}
+  .seekbar .rail{position:absolute;left:0;right:0;top:11px;height:5px;border-radius:3px;background:var(--rail)}
+  .seekbar .fill{position:absolute;left:0;top:11px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%}
+  .seekbar .head{position:absolute;top:13px;width:13px;height:13px;border-radius:50%;background:#fff;
+    transform:translate(-50%,-50%);box-shadow:0 1px 6px rgba(0,0,0,.6);left:0%}
+  .seekbar .tick{position:absolute;top:8px;width:1px;height:11px;background:var(--tick)}
+  .seekbar .ticklab{position:absolute;top:22px;transform:translateX(-50%);font-size:9.5px;color:var(--faint);white-space:nowrap}
+
+  /* chart */
+  .chartbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-top:18px;padding:12px 12px 6px}
+  .charthead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .charthead h2{font-size:15px;margin:2px 0;letter-spacing:.04em}
+  .charthead .hint{color:var(--faint);font-size:12px}
+  #chart{width:100%;display:block;cursor:crosshair;touch-action:none}
+  #tooltip{position:fixed;z-index:60;pointer-events:none;background:var(--tip-bg);color:#ece7dd;border:1px solid #3a3a44;border-radius:10px;
+    padding:8px 11px;font-size:12.5px;line-height:1.45;max-width:290px;display:none;box-shadow:0 8px 28px rgba(0,0,0,.55)}
+  #tooltip .tt-a{font-weight:700;color:#fff}
+  #tooltip .tt-m{color:var(--dim)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 2px}
+  .chip{border:1px solid var(--line);background:var(--panel2);color:var(--dim);border-radius:999px;
+    padding:10px 14px;font-size:12.5px;cursor:pointer;min-height:38px}
+  .chip.on{color:#171106;background:var(--accent);border-color:transparent;font-weight:700}
+  .legend-note{color:var(--faint);font-size:12px;margin-top:6px}
+
+  /* right now */
+  .rightnow{margin-top:20px}
+  .rightnow h2,.listsec h2{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 4px}
+  .rightnow .rn-sub{color:var(--faint);font-size:12.5px;margin-bottom:10px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 13px;box-shadow:inset 4px 0 0 var(--accent)}
+  .card .c-artist{font-weight:800;font-size:15.5px;line-height:1.25}
+  .card .c-title{color:var(--ink);font-size:14px}
+  .card .c-meta{color:var(--dim);font-size:12.5px;margin-top:5px;line-height:1.5}
+  .card .c-links{margin-top:8px;font-size:12.5px;display:flex;gap:14px}
+  .empty{background:var(--panel);border:1px dashed var(--line);border-radius:12px;color:var(--faint);
+    padding:16px;font-size:13.5px;text-align:center}
+
+  /* search */
+  .searchrow{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .searchrow label{font-size:13px;color:var(--dim)}
+  #artistSearch{flex:1 1 240px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);padding:10px 12px;font-size:14px}
+  #searchResults{margin-top:8px}
+  .srow{display:flex;gap:10px;align-items:baseline;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;margin-top:6px;cursor:pointer;font-size:13.5px}
+  .srow:hover{border-color:var(--accent)}
+  .srow .s-time{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+  .srow .s-meta{color:var(--faint);font-size:12px}
+
+  /* list */
+  .listsec{margin-top:26px}
+  .trackblock{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-top:12px;overflow:hidden}
+  .trackhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:12px 14px 8px;cursor:pointer}
+  .trackhead .th-name{font-weight:800;font-size:16px}
+  .trackhead .th-win{color:var(--faint);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .parthead{padding:8px 14px 2px;color:var(--accent);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .lrow{display:flex;gap:10px;align-items:baseline;padding:9px 14px;border-top:1px solid var(--row-line);font-size:13.5px;cursor:pointer;min-height:38px}
+  .lrow:hover{background:var(--row-hover)}
+  .lrow.playing{background:var(--playing-bg)}
+  .lrow .l-time{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;min-width:44px}
+  .lrow .l-src{flex:1 1 auto;min-width:0}
+  .lrow .l-src .l-artist{font-weight:700}
+  .lrow .l-meta{color:var(--faint);font-size:12px;white-space:nowrap}
+  .lrow .l-yt{font-size:12.5px;white-space:nowrap;padding:8px 2px}
+  .card .c-links a{padding:6px 0}
+  .badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:11px;color:var(--dim);margin-left:6px;vertical-align:1px}
+  .badge.interp{color:#ffb43a;border-color:#5a4517}
+  .unplaced{padding:9px 14px;border-top:1px solid var(--row-line);font-size:13px;color:var(--dim)}
+
+  footer{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--faint);font-size:12.5px;line-height:1.65}
+  footer b{color:var(--dim)}
+  /* visible player */
+  .playerbox{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
+  .videoframe{position:relative;width:100%;max-width:620px;margin:0 auto;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+  .videoframe iframe{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
+  .videoframe #ytPlayer{position:absolute;inset:0}
+  .prow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:620px;margin:8px auto 0}
+  .pstatus{display:none;color:var(--dim);font-size:12.5px;line-height:1.5;flex:1 1 260px}
+  #ytWatch{font-size:12.5px;white-space:nowrap;padding:6px 0}
+  @media (max-width:640px){ .nowtrack .nt-name{font-size:15px} .clock{font-size:13px}
+    .lrow{flex-wrap:wrap} .lrow .l-meta{white-space:normal} .lrow .l-src{flex:1 1 60%} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="kicker">Timeline Anatomy · Beastie Boys · 1989</div>
+    <h1>Paul&rsquo;s Boutique <span class="thin">Anatomy</span></h1>
+    <p class="sub">The most densely sampled album of its era, taken apart on the clock. Engineer Mario Caldato Jr. estimated
+    <b>&ldquo;ninety-five percent of the record was sampled.&rdquo;</b> Below: 122 documented sample connections placed at the
+    second they enter &mdash; plus 3 more that are documented but were never given a published position, listed under their
+    tracks rather than guessed onto the chart &mdash; while the album itself plays above, conducted from the official YouTube uploads.</p>
+    <div class="stats">
+      <span class="stat"><b>125</b> sample connections</span>
+      <span class="stat"><b>121</b> distinct sources</span>
+      <span class="stat"><b>122</b> with verified start times</span>
+      <span class="stat"><b>23</b> official videos, chained</span>
+      <span class="stat"><b>53:07</b> as chained here</span>
+    </div>
+  </header>
+
+  <section class="playerbox" aria-label="Album player">
+    <div class="videoframe" id="videoframe"><iframe id="ytPlayer" title="Paul&rsquo;s Boutique &mdash; YouTube player" src="https://www.youtube.com/embed/x2TP7tNQPwk?enablejsapi=1&amp;rel=0&amp;playsinline=1&amp;modestbranding=1" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+    <div class="prow">
+      <div class="pstatus" id="playStatus" role="status"></div>
+      <a id="ytWatch" href="https://www.youtube.com/watch?v=x2TP7tNQPwk" target="_blank" rel="noopener">Watch this track on YouTube</a>
+    </div>
+  </section>
+
+  <div class="transport">
+    <div class="trow">
+      <button id="playBtn" aria-label="Play or pause">&#9654;</button>
+      <div class="clock"><b id="clockNow">0:00</b> / <span id="clockTotal">53:07</span></div>
+      <div class="nowtrack">
+        <div class="nt-label">Now playing</div>
+        <div class="nt-name"><span id="ntName">Paul&rsquo;s Boutique</span> <span class="nt-part" id="ntPart"></span></div>
+      </div>
+    </div>
+    <div class="seekbar" id="seekbar">
+      <div class="rail"></div><div class="fill" id="seekFill"></div><div class="head" id="seekHead"></div>
+    </div>
+  </div>
+
+  <section class="chartbox">
+    <div class="charthead">
+      <h2>THE BRAID &mdash; the 122 placed samples, by the decade they were borrowed from</h2>
+      <span class="hint">click the chart to jump the album there &middot; drag to scrub &middot; hover a strand to name it</span>
+    </div>
+    <canvas id="chart"></canvas>
+    <div class="chips" id="decadeChips"></div>
+    <div class="legend-note">Band height &prop; how much album time that decade supplies (estimated spans). Strand <i>starts</i> are the verified facts &mdash; see the honesty notes at the bottom.</div>
+  </section>
+
+  <section class="rightnow">
+    <h2>Right now</h2>
+    <div class="rn-sub">The crate the album is digging in at this second of the record.</div>
+    <div class="cards" id="rnCards"></div>
+  </section>
+
+  <section class="searchrow">
+    <label for="artistSearch">Find an artist in the mix:</label>
+    <input id="artistSearch" type="text" placeholder="try: Beatles, Led Zeppelin, Sly, Johnny Cash&hellip;" autocomplete="off">
+  </section>
+  <div id="searchResults"></div>
+
+  <section class="listsec">
+    <h2>Track by track</h2>
+    <div id="trackList"></div>
+  </section>
+
+  <footer id="honesty"></footer>
+</div>
+<div id="tooltip"></div>
+<script>
+"use strict";
+const DATA = {"segments": [{"vid": "x2TP7tNQPwk", "start": 0, "dur": 89, "trackN": 1, "part": null}, {"vid": "YxaPrPfATuQ", "start": 89, "dur": 199, "trackN": 2, "part": null}, {"vid": "PaE3JTPVKdc", "start": 288, "dur": 180, "trackN": 3, "part": null}, {"vid": "-OgG0GwT-uY", "start": 468, "dur": 177, "trackN": 4, "part": null}, {"vid": "WVIbke4NTrg", "start": 645, "dur": 253, "trackN": 5, "part": null}, {"vid": "Y90N5XsasN0", "start": 898, "dur": 191, "trackN": 6, "part": null}, {"vid": "itStM-gwUyU", "start": 1089, "dur": 219, "trackN": 7, "part": null}, {"vid": "XTUbZx31_SA", "start": 1308, "dur": 227, "trackN": 8, "part": null}, {"vid": "D1SLYttJ4wg", "start": 1535, "dur": 23, "trackN": 9, "part": null}, {"vid": "I39NykopgK0", "start": 1558, "dur": 208, "trackN": 10, "part": null}, {"vid": "MaUZpqSylkg", "start": 1766, "dur": 219, "trackN": 11, "part": null}, {"vid": "p-gf6KdJVPA", "start": 1985, "dur": 187, "trackN": 12, "part": null}, {"vid": "H6nrmFdlXc0", "start": 2172, "dur": 247, "trackN": 13, "part": null}, {"vid": "jaA9F1PfOpA", "start": 2419, "dur": 11, "trackN": 14, "part": null}, {"vid": "a1CwXMGyFFU", "start": 2430, "dur": 57, "trackN": 15, "part": "59 Chrystie Street"}, {"vid": "6tHE2riC8Jk", "start": 2487, "dur": 75, "trackN": 15, "part": "Get on the Mic"}, {"vid": "Dq8rRxIGSnw", "start": 2562, "dur": 119, "trackN": 15, "part": "Stop That Train"}, {"vid": "7XqWICaNjTs", "start": 2681, "dur": 142, "trackN": 15, "part": "A Year and a Day"}, {"vid": "JfhgscVs_9g", "start": 2823, "dur": 92, "trackN": 15, "part": "Hello Brooklyn"}, {"vid": "Bji0w5iGDQ8", "start": 2915, "dur": 63, "trackN": 15, "part": "Dropping Names"}, {"vid": "gxmgxcEouNg", "start": 2978, "dur": 54, "trackN": 15, "part": "Lay It on Me"}, {"vid": "tpSLyTwhjr8", "start": 3032, "dur": 49, "trackN": 15, "part": "Mike on the Mic"}, {"vid": "oXvXcecHg_E", "start": 3081, "dur": 106, "trackN": 15, "part": "A.W.O.L."}], "samples": [{"y": 1974, "d": 1970, "artist": "Idris Muhammad", "title": "Loran's Dance", "el": "Multiple Elements", "type": "direct", "track": "To All the Girls", "trackN": 1, "part": null, "srcAt": 1, "yt": "a9gdvyEF6M4", "q": "Idris Muhammad Loran's Dance", "ws": "https://www.whosampled.com/sample/1303/Beastie-Boys-To-All-the-Girls-Idris-Muhammad-Loran%27s-Dance/", "a": 1, "e": 89}, {"y": 1974, "d": 1970, "artist": "Alphonse Mouzon", "title": "Funky Snakefoot", "el": "Drums", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 0, "yt": "FownCLxUZX8", "q": "Alphonse Mouzon Funky Snakefoot", "ws": "https://www.whosampled.com/sample/1304/Beastie-Boys-Shake-Your-Rump-Alphonse-Mouzon-Funky-Snakefoot/", "a": 89, "e": 92}, {"y": 1979, "d": 1970, "artist": "Harvey Scales", "title": "Dancing Room Only", "el": "Drums", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 1, "yt": null, "q": "Harvey Scales Dancing Room Only", "ws": "https://www.whosampled.com/sample/1305/Beastie-Boys-Shake-Your-Rump-Harvey-Scales-Dancing-Room-Only/", "a": 92, "e": 288}, {"y": 1975, "d": 1970, "artist": "Ronnie Laws", "title": "Tell Me Something Good", "el": "Hook / Riff", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 1, "yt": "tcwdbmpX66A", "q": "Ronnie Laws Tell Me Something Good", "ws": "https://www.whosampled.com/sample/1307/Beastie-Boys-Shake-Your-Rump-Ronnie-Laws-Tell-Me-Something-Good/", "a": 101, "e": 288}, {"y": 1978, "d": 1970, "artist": "Foxy", "title": "Get Off", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 2, "yt": "mB1hr_1_f8o", "q": "Foxy Get Off", "ws": "https://www.whosampled.com/sample/21407/Beastie-Boys-Shake-Your-Rump-Foxy-Get-Off/", "a": 110, "e": 111}, {"y": 1975, "d": 1970, "artist": "Louis Bellson, Shelly Manne, Willie Bobo and Paul Humphrey", "title": "Super Mellow", "el": "Drums", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 4, "yt": null, "q": "Louis Bellson, Shelly Manne, Willie Bobo and Paul Humphrey Super Mellow", "ws": "https://www.whosampled.com/sample/1327/Beastie-Boys-Shake-Your-Rump-Louis-Bellson-Shelly-Manne-Willie-Bobo-Paul-Humphrey-Super-Mellow/", "a": 111, "e": 113}, {"y": 1981, "d": 1980, "artist": "The Treacherous Three", "title": "Put the Boogie in Your Body", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 0, "yt": "ELSprGPWCPw", "q": "The Treacherous Three Put the Boogie in Your Body", "ws": "https://www.whosampled.com/sample/186026/Beastie-Boys-Shake-Your-Rump-The-Treacherous-Three-Put-the-Boogie-in-Your-Body/", "a": 113, "e": 127}, {"y": 1980, "d": 1980, "artist": "Funky 4 + 1", "title": "That's the Joint", "el": "Multiple Elements", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 16, "yt": "OKbPzGUihG0", "q": "Funky 4 + 1 That's the Joint", "ws": "https://www.whosampled.com/sample/1316/Beastie-Boys-Shake-Your-Rump-Funky-4-%2B-1-That%27s-the-Joint/", "a": 127, "e": 129}, {"y": 1976, "d": 1970, "artist": "Rose Royce", "title": "6 O'Clock DJ (Let's Rock)", "el": "Hook / Riff", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 1, "yt": null, "q": "Rose Royce 6 O'Clock DJ (Let's Rock)", "ws": "https://www.whosampled.com/sample/1317/Beastie-Boys-Shake-Your-Rump-Rose-Royce-6-O%27Clock-DJ-(Let%27s-Rock)/", "a": 129, "e": 146}, {"y": 1975, "d": 1970, "artist": "Louis Bellson, Shelly Manne, Willie Bobo and Paul Humphrey", "title": "One Score and Four Drummers Ago", "el": "Drums", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 109, "yt": null, "q": "Louis Bellson, Shelly Manne, Willie Bobo and Paul Humphrey One Score and Four Drummers Ago", "ws": "https://www.whosampled.com/sample/949612/Beastie-Boys-Shake-Your-Rump-Louis-Bellson-Shelly-Manne-Willie-Bobo-Paul-Humphrey-One-Score-and-Four-Drummers-Ago/", "a": 146, "e": 153}, {"y": 1976, "d": 1970, "artist": "Rose Royce", "title": "Yo Yo", "el": "Bass", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 1, "yt": "uKhhjN7wzPo", "q": "Rose Royce Yo Yo", "ws": "https://www.whosampled.com/sample/1318/Beastie-Boys-Shake-Your-Rump-Rose-Royce-Yo-Yo/", "a": 153, "e": 161}, {"y": 1976, "d": 1970, "artist": "Rose Royce", "title": "Righteous Rhythm", "el": "Multiple Elements", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 0, "yt": null, "q": "Rose Royce Righteous Rhythm", "ws": "https://www.whosampled.com/sample/882036/Beastie-Boys-Shake-Your-Rump-Rose-Royce-Righteous-Rhythm/", "a": 161, "e": 182}, {"y": 1984, "d": 1980, "artist": "Afrika Bambaataa and James Brown", "title": "Unity (Pt. 2 - Because It's Coming)", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 22, "yt": null, "q": "Afrika Bambaataa and James Brown Unity (Pt. 2 - Because It's Coming)", "ws": "https://www.whosampled.com/sample/138183/Beastie-Boys-Shake-Your-Rump-Afrika-Bambaataa-James-Brown-Unity-(Pt.-2-Because-It%27s-Coming)/", "a": 182, "e": 212}, {"y": 1983, "d": 1980, "artist": "The B-Boys", "title": "Rock the House", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 21, "yt": null, "q": "The B-Boys Rock the House", "ws": "https://www.whosampled.com/sample/349606/Beastie-Boys-Shake-Your-Rump-The-B-Boys-Rock-the-House/", "a": 220, "e": 235}, {"y": 1976, "d": 1970, "artist": "Rose Royce", "title": "Born to Love You", "el": "Multiple Elements", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 1, "yt": "YtZSdj5QprE", "q": "Rose Royce Born to Love You", "ws": "https://www.whosampled.com/sample/1321/Beastie-Boys-Shake-Your-Rump-Rose-Royce-Born-to-Love-You/", "a": 235, "e": 288}, {"y": 1981, "d": 1980, "artist": "Sugarhill Gang", "title": "8th Wonder", "el": "Multiple Elements", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 113, "yt": "h2gv5_aC5gQ", "q": "Sugarhill Gang 8th Wonder", "ws": "https://www.whosampled.com/sample/1323/Beastie-Boys-Shake-Your-Rump-Sugarhill-Gang-8th-Wonder/", "a": 252, "e": 282}, {"y": 1971, "d": 1970, "artist": "Pink Floyd", "title": "One of These Days", "el": "Sound FX / Other", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 25, "yt": "xWk-extYHsw", "q": "Pink Floyd One of These Days", "ws": "https://www.whosampled.com/sample/21409/Beastie-Boys-Johnny-Ryall-Pink-Floyd-One-of-These-Days/", "a": 288, "e": 289}, {"y": 1971, "d": 1970, "artist": "Donny Hathaway", "title": "Magnificent Sanctuary Band", "el": "Drums", "type": "direct", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 1, "yt": "3czILx80MEI", "q": "Donny Hathaway Magnificent Sanctuary Band", "ws": "https://www.whosampled.com/sample/1280/Beastie-Boys-Johnny-Ryall-Donny-Hathaway-Magnificent-Sanctuary-Band/", "a": 289, "e": 468}, {"y": 1981, "d": 1980, "artist": "Afrika Bambaataa and The Jazzy 5", "title": "Jazzy Sensation (Bronx Version)", "el": "Sound FX / Other", "type": "unknown", "track": "Shake Your Rump", "trackN": 2, "part": null, "srcAt": 3, "yt": "dP9ohXk9mts", "q": "Afrika Bambaataa and The Jazzy 5 Jazzy Sensation (Bronx Version)", "ws": "https://www.whosampled.com/sample/1325/Beastie-Boys-Shake-Your-Rump-Afrika-Bambaataa-The-Jazzy-5-Jazzy-Sensation-(Bronx-Version)/", "a": 291, "e": 288}, {"y": 1972, "d": 1970, "artist": "David Bromberg", "title": "Sharon", "el": "Multiple Elements", "type": "direct", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 1, "yt": "A-TpD_VmfYI", "q": "David Bromberg Sharon", "ws": "https://www.whosampled.com/sample/1401/Beastie-Boys-Johnny-Ryall-David-Bromberg-Sharon/", "a": 299, "e": 318}, {"y": 1970, "d": 1970, "artist": "Paul McCartney", "title": "Momma Miss America", "el": "Drums", "type": "direct", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 118, "yt": "9fdI_CNcT70", "q": "Paul McCartney Momma Miss America", "ws": "https://www.whosampled.com/sample/1402/Beastie-Boys-Johnny-Ryall-Paul-McCartney-Momma-Miss-America/", "a": 318, "e": 322}, {"y": 1965, "d": 1960, "artist": "Bob Dylan", "title": "Maggie's Farm", "el": "Vocals / Lyrics", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 5, "yt": "gKie-cHhqU0", "q": "Bob Dylan Maggie's Farm", "ws": "https://www.whosampled.com/sample/1140329/Beastie-Boys-Johnny-Ryall-Bob-Dylan-Maggie%27s-Farm/", "a": 322, "e": 352}, {"y": 1983, "d": 1980, "artist": "DJ Grand Wizard Theodore and Kevie Kev Rockwell", "title": "Military Cut - Scratch Mix", "el": "Multiple Elements", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 16, "yt": null, "q": "DJ Grand Wizard Theodore and Kevie Kev Rockwell Military Cut - Scratch Mix", "ws": "https://www.whosampled.com/sample/21410/Beastie-Boys-Johnny-Ryall-DJ-Grand-Wizard-Theodore-Kevie-Kev-Rockwell-Military-Cut-Scratch-Mix/", "a": 354, "e": 468}, {"y": 1971, "d": 1970, "artist": "Jean Knight", "title": "Mr. Big Stuff", "el": "Vocals / Lyrics", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 13, "yt": "lPgOg4dg2ZM", "q": "Jean Knight Mr. Big Stuff", "ws": "https://www.whosampled.com/sample/16398/Beastie-Boys-Johnny-Ryall-Jean-Knight-Mr.-Big-Stuff/", "a": 397, "e": 427}, {"y": 1984, "d": 1980, "artist": "Kurtis Blow", "title": "AJ Scratch", "el": "Vocals / Lyrics", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 30, "yt": "UM62pTL2emo", "q": "Kurtis Blow AJ Scratch", "ws": "https://www.whosampled.com/sample/21411/Beastie-Boys-Johnny-Ryall-Kurtis-Blow-AJ-Scratch/", "a": 445, "e": 446}, {"y": 1986, "d": 1980, "artist": "Beastie Boys", "title": "(You Gotta) Fight for Your Right (To Party!)", "el": "Vocals / Lyrics", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 37, "yt": "eBShN8qT4lk", "q": "Beastie Boys (You Gotta) Fight for Your Right (To Party!)", "ws": "https://www.whosampled.com/sample/30991/Beastie-Boys-Johnny-Ryall-Beastie-Boys-(You-Gotta)-Fight-for-Your-Right-(To-Party!)/", "a": 446, "e": 447}, {"y": 1971, "d": 1970, "artist": "Funk, Inc.", "title": "Kool Is Back", "el": "Sound FX / Other", "type": "direct", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 105, "yt": "PpvD4Th3yyA", "q": "Funk, Inc. Kool Is Back", "ws": "https://www.whosampled.com/sample/120569/Beastie-Boys-Johnny-Ryall-Funk,-Inc.-Kool-Is-Back/", "a": 447, "e": 464}, {"y": 1986, "d": 1980, "artist": "Beastie Boys", "title": "The New Style", "el": "Vocals / Lyrics", "type": "unknown", "track": "Johnny Ryall", "trackN": 3, "part": null, "srcAt": 1, "yt": "QbGnU96ByYQ", "q": "Beastie Boys The New Style", "ws": "https://www.whosampled.com/sample/21629/Beastie-Boys-Johnny-Ryall-Beastie-Boys-The-New-Style/", "a": 464, "e": 468}, {"y": 1972, "d": 1970, "artist": "Curtis Mayfield", "title": "Superfly", "el": "Multiple Elements", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 4, "yt": "cZ2MvJGVQoU", "q": "Curtis Mayfield Superfly", "ws": "https://www.whosampled.com/sample/44/Beastie-Boys-Egg-Man-Curtis-Mayfield-Superfly/", "a": 468, "e": 645}, {"y": 1973, "d": 1970, "artist": "Lightnin' Rod feat. Kool & the Gang", "title": "Sport", "el": "Drums", "type": "direct", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 1, "yt": "uK9oSK4yeic", "q": "Lightnin' Rod feat. Kool & the Gang Sport", "ws": "https://www.whosampled.com/sample/1403/Beastie-Boys-Egg-Man-Lightnin%27-Rod-Kool-%26-the-Gang-Sport/", "a": 485, "e": 645}, {"y": 1975, "d": 1970, "artist": "Tower of Power", "title": "Drop It in the Slot", "el": "Multiple Elements", "type": "direct", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 7, "yt": "gdbH3RXCZaw", "q": "Tower of Power Drop It in the Slot", "ws": "https://www.whosampled.com/sample/1404/Beastie-Boys-Egg-Man-Tower-of-Power-Drop-It-in-the-Slot/", "a": 491, "e": 645}, {"y": 1975, "d": 1970, "artist": "John Williams", "title": "Main Title (Theme From Jaws)", "el": "Multiple Elements", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 31, "yt": "BePfzCOMRZQ", "q": "John Williams Main Title (Theme From Jaws)", "ws": "https://www.whosampled.com/sample/12648/Beastie-Boys-Egg-Man-John-Williams-Main-Title-(Theme-From-Jaws)/", "a": 516, "e": 517}, {"y": 1978, "d": 1970, "artist": "Elvis Costello and The Attractions", "title": "Pump It Up", "el": "Multiple Elements", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 80, "yt": "KabskY4osBw", "q": "Elvis Costello and The Attractions Pump It Up", "ws": "https://www.whosampled.com/sample/30994/Beastie-Boys-Egg-Man-Elvis-Costello-The-Attractions-Pump-It-Up/", "a": 517, "e": 518}, {"y": 1960, "d": 1960, "artist": "Bernard Herrmann", "title": "The Murder", "el": "Multiple Elements", "type": "direct", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 2, "yt": "gcQVMhL-PgY", "q": "Bernard Herrmann The Murder", "ws": "https://www.whosampled.com/sample/12650/Beastie-Boys-Egg-Man-Bernard-Herrmann-The-Murder/", "a": 518, "e": 532}, {"y": 1975, "d": 1970, "artist": "Commodores", "title": "I'm Ready", "el": "Drums", "type": "direct", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 0, "yt": "yhymixj4Tr0", "q": "Commodores I'm Ready", "ws": "https://www.whosampled.com/sample/30993/Beastie-Boys-Egg-Man-Commodores-I%27m-Ready/", "a": 532, "e": 550}, {"y": 1987, "d": 1980, "artist": "Public Enemy", "title": "You're Gonna Get Yours", "el": "Vocals / Lyrics", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 57, "yt": "YQEKK34ObzM", "q": "Public Enemy You're Gonna Get Yours", "ws": "https://www.whosampled.com/sample/12009/Beastie-Boys-Egg-Man-Public-Enemy-You%27re-Gonna-Get-Yours/", "a": 550, "e": 563}, {"y": 1987, "d": 1980, "artist": "Public Enemy", "title": "Bring the Noise", "el": "Vocals / Lyrics", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 32, "yt": "mZF4G79OLkk", "q": "Public Enemy Bring the Noise", "ws": "https://www.whosampled.com/sample/11648/Beastie-Boys-Egg-Man-Public-Enemy-Bring-the-Noise/", "a": 563, "e": 567}, {"y": 1968, "d": 1960, "artist": "Sly & the Family Stone", "title": "Dance to the Music", "el": "Drums", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 46, "yt": "7O0AywcC5To", "q": "Sly & the Family Stone Dance to the Music", "ws": "https://www.whosampled.com/sample/1405/Beastie-Boys-Egg-Man-Sly-%26-the-Family-Stone-Dance-to-the-Music/", "a": 567, "e": 583}, {"y": 1982, "d": 1980, "artist": "Beastie Boys", "title": "Egg Raid on Mojo", "el": "Vocals / Lyrics", "type": "interpolation", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 36, "yt": "_fyEPio-kgM", "q": "Beastie Boys Egg Raid on Mojo", "ws": "https://www.whosampled.com/sample/16040/Beastie-Boys-Egg-Man-Beastie-Boys-Egg-Raid-on-Mojo/", "a": 583, "e": 590}, {"y": 1965, "d": 1960, "artist": "Dr. Seuss", "title": "Green Eggs and Ham", "el": "Vocals / Lyrics", "type": "unknown", "track": "Egg Man", "trackN": 4, "part": null, "srcAt": 42, "yt": null, "q": "Dr. Seuss Green Eggs and Ham", "ws": "https://www.whosampled.com/sample/644158/Beastie-Boys-Egg-Man-Dr.-Seuss-Green-Eggs-and-Ham/", "a": 590, "e": 620}, {"y": 1979, "d": 1970, "artist": "Eagles", "title": "Those Shoes", "el": "Multiple Elements", "type": "unknown", "track": "High Plains Drifter", "trackN": 5, "part": null, "srcAt": 0, "yt": "UsREsBbDjFA", "q": "Eagles Those Shoes", "ws": "https://www.whosampled.com/sample/1406/", "a": 650, "e": 898}, {"y": 1975, "d": 1970, "artist": "The Fatback Band", "title": "Put Your Love (In My Tender Care)", "el": "Vocals / Lyrics", "type": "unknown", "track": "High Plains Drifter", "trackN": 5, "part": null, "srcAt": 169, "yt": "KsgqMf5mdUA", "q": "The Fatback Band Put Your Love (In My Tender Care)", "ws": "https://www.whosampled.com/sample/21414/", "a": 680, "e": 898}, {"y": 1972, "d": 1970, "artist": "Loggins and Messina", "title": "Your Mama Don't Dance", "el": "Vocals / Lyrics", "type": "unknown", "track": "High Plains Drifter", "trackN": 5, "part": null, "srcAt": 124, "yt": "VTu4yQH8KBs", "q": "Loggins and Messina Your Mama Don't Dance", "ws": "https://www.whosampled.com/sample/21412/", "a": 803, "e": 832}, {"y": 1980, "d": 1980, "artist": "Star Wars Episode V: The Empire Strikes Back", "title": "Luke Meets Yoda", "el": "Dialogue", "type": "unknown", "track": "High Plains Drifter", "trackN": 5, "part": null, "srcAt": 83, "yt": null, "q": "Star Wars Episode V: The Empire Strikes Back Luke Meets Yoda", "ws": "https://www.whosampled.com/sample/545564/", "a": 832, "e": 856}, {"y": 1969, "d": 1960, "artist": "The Band", "title": "Up on Cripple Creek", "el": "Vocals / Lyrics", "type": "unknown", "track": "High Plains Drifter", "trackN": 5, "part": null, "srcAt": 58, "yt": "zFFGkDmjRlo", "q": "The Band Up on Cripple Creek", "ws": "https://www.whosampled.com/sample/22532/", "a": 856, "e": 870}, {"y": 1977, "d": 1970, "artist": "Ramones", "title": "Suzy Is a Headbanger", "el": "Vocals / Lyrics", "type": "unknown", "track": "High Plains Drifter", "trackN": 5, "part": null, "srcAt": 39, "yt": "I-f0uAu7h2E", "q": "Ramones Suzy Is a Headbanger", "ws": "https://www.whosampled.com/sample/19417/", "a": 870, "e": 898}, {"y": 1968, "d": 1960, "artist": "The Beatles", "title": "Back in the U.S.S.R.", "el": "Sound FX / Other", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 6, "yt": "PnCUOFlNHJI", "q": "The Beatles Back in the U.S.S.R.", "ws": "https://www.whosampled.com/sample/21648/", "a": 898, "e": 900}, {"y": 1961, "d": 1960, "artist": "Ray Charles", "title": "What'd I Say (1961 Version)", "el": "Vocals / Lyrics", "type": "direct", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 271, "yt": "ZZWUKXnDrVs", "q": "Ray Charles What'd I Say (1961 Version)", "ws": "https://www.whosampled.com/sample/1368779/", "a": 900, "e": 1089}, {"y": 1967, "d": 1960, "artist": "The Beatles", "title": "When I'm Sixty-Four", "el": "Multiple Elements", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 8, "yt": "HCTunqv1Xt4", "q": "The Beatles When I'm Sixty-Four", "ws": "https://www.whosampled.com/sample/1436/", "a": 906, "e": 1089}, {"y": 1971, "d": 1970, "artist": "Isaac Hayes", "title": "Walk From Regio's", "el": "Hook / Riff", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 8, "yt": "RUeDHCScNRw", "q": "Isaac Hayes Walk From Regio's", "ws": "https://www.whosampled.com/sample/21645/", "a": 930, "e": 960}, {"y": 1967, "d": 1960, "artist": "The Beatles", "title": "Sgt. Pepper's Lonely Hearts Club Band", "el": "Sound FX / Other", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 1, "yt": "VtXl8xAPAtA", "q": "The Beatles Sgt. Pepper's Lonely Hearts Club Band", "ws": "https://www.whosampled.com/sample/21633/", "a": 970, "e": 986}, {"y": 1988, "d": 1980, "artist": "Boogie Down Productions", "title": "My Philosophy", "el": "Vocals / Lyrics", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 46, "yt": "h1vKOchATXs", "q": "Boogie Down Productions My Philosophy", "ws": "https://www.whosampled.com/sample/20921/", "a": 986, "e": 1006}, {"y": 1967, "d": 1960, "artist": "The Beatles", "title": "Sgt. Pepper's Lonely Hearts Club Band (Reprise)", "el": "Drums", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 5, "yt": "aP47nqo2cf4", "q": "The Beatles Sgt. Pepper's Lonely Hearts Club Band (Reprise)", "ws": "https://www.whosampled.com/sample/1437/", "a": 1006, "e": 1018}, {"y": 1969, "d": 1960, "artist": "The Beatles", "title": "The End", "el": "Multiple Elements", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 36, "yt": "12R4FzIhdoQ", "q": "The Beatles The End", "ws": "https://www.whosampled.com/sample/5030/", "a": 1018, "e": 1042}, {"y": 1970, "d": 1970, "artist": "James Brown", "title": "Get Up, Get Into It, Get Involved", "el": "Hook / Riff", "type": "unknown", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 213, "yt": "3esdIgwQiUg", "q": "James Brown Get Up, Get Into It, Get Involved", "ws": "https://www.whosampled.com/sample/21636/", "a": 1042, "e": 1071}, {"y": 1987, "d": 1980, "artist": "Pato Banton", "title": "Don't Sniff Coke", "el": "Vocals / Lyrics", "type": "direct", "track": "The Sounds of Science", "trackN": 6, "part": null, "srcAt": 204, "yt": "FPxt-P5mjZc", "q": "Pato Banton Don't Sniff Coke", "ws": "https://www.whosampled.com/sample/21644/", "a": 1071, "e": 1089}, {"y": 1971, "d": 1970, "artist": "Sly & the Family Stone", "title": "Brave & Strong", "el": "Multiple Elements", "type": "unknown", "track": "3-Minute Rule", "trackN": 7, "part": null, "srcAt": 1, "yt": "ety9k15Xl-Y", "q": "Sly & the Family Stone Brave & Strong", "ws": "https://www.whosampled.com/sample/2695/", "a": 1096, "e": 1308}, {"y": 1974, "d": 1970, "artist": "Fancy", "title": "Feel Good", "el": "Drums", "type": "unknown", "track": "3-Minute Rule", "trackN": 7, "part": null, "srcAt": 2, "yt": null, "q": "Fancy Feel Good", "ws": "https://www.whosampled.com/sample/21279/", "a": 1113, "e": 1308}, {"y": 1964, "d": 1960, "artist": "Manfred Mann", "title": "Do Wah Diddy Diddy", "el": "Vocals / Lyrics", "type": "unknown", "track": "3-Minute Rule", "trackN": 7, "part": null, "srcAt": 7, "yt": "DDYJsp1-2NQ", "q": "Manfred Mann Do Wah Diddy Diddy", "ws": "https://www.whosampled.com/sample/1512440/", "a": 1138, "e": 1163}, {"y": 1784, "d": 1780, "artist": "Traditional Folk", "title": "Roses Are Red", "el": "Vocals / Lyrics", "type": "unknown", "track": "3-Minute Rule", "trackN": 7, "part": null, "srcAt": 14, "yt": null, "q": "Traditional Folk Roses Are Red", "ws": "https://www.whosampled.com/sample/643424/", "a": 1163, "e": 1193}, {"y": 1974, "d": 1970, "artist": "Commodores", "title": "Machine Gun", "el": "Multiple Elements", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 98, "yt": "iKvK5CasiZ0", "q": "Commodores Machine Gun", "ws": "https://www.whosampled.com/sample/1457/", "a": 1308, "e": 1535}, {"y": 1983, "d": 1980, "artist": "P-Funk All Stars", "title": "Pumpin' It Up (Special Club Mix)", "el": "Drums", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 0, "yt": null, "q": "P-Funk All Stars Pumpin' It Up (Special Club Mix)", "ws": "https://www.whosampled.com/sample/30995/", "a": 1308, "e": 1535}, {"y": 1983, "d": 1980, "artist": "Kurtis Blow", "title": "Party Time", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 45, "yt": "MnTsACfy-_M", "q": "Kurtis Blow Party Time", "ws": "https://www.whosampled.com/sample/1535/", "a": 1369, "e": 1370}, {"y": 1984, "d": 1980, "artist": "World's Famous Supreme Team", "title": "Hey DJ", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 200, "yt": "Sy1cehdtp0A", "q": "World's Famous Supreme Team Hey DJ", "ws": "https://www.whosampled.com/sample/21550/", "a": 1370, "e": 1371}, {"y": 1981, "d": 1980, "artist": "Jeanette \"Lady\" Day", "title": "Come Let Me Love You (Instrumental)", "el": "Drums", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 72, "yt": null, "q": "Jeanette \"Lady\" Day Come Let Me Love You (Instrumental)", "ws": "https://www.whosampled.com/sample/2884/", "a": 1371, "e": 1535}, {"y": 1980, "d": 1980, "artist": "Cameo", "title": "Shake Your Pants", "el": "Multiple Elements", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 4, "yt": "DTrMYauvX8M", "q": "Cameo Shake Your Pants", "ws": "https://www.whosampled.com/sample/1282/", "a": 1374, "e": 1375}, {"y": 1978, "d": 1970, "artist": "Bar-Kays", "title": "Holy Ghost", "el": "Hook / Riff", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 180, "yt": "i4Yoir-2ZWQ", "q": "Bar-Kays Holy Ghost", "ws": "https://www.whosampled.com/sample/22022/", "a": 1375, "e": 1535}, {"y": 1981, "d": 1980, "artist": "Afrika Bambaataa and The Jazzy 5", "title": "Jazzy Sensation (Bronx Version)", "el": "Multiple Elements", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 10, "yt": "dP9ohXk9mts", "q": "Afrika Bambaataa and The Jazzy 5 Jazzy Sensation (Bronx Version)", "ws": "https://www.whosampled.com/sample/21549/", "a": 1375, "e": 1377}, {"y": 1973, "d": 1970, "artist": "Kool & the Gang", "title": "Jungle Boogie", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 129, "yt": "QGKiC2suCHQ", "q": "Kool & the Gang Jungle Boogie", "ws": "https://www.whosampled.com/sample/22023/", "a": 1377, "e": 1385}, {"y": 1982, "d": 1980, "artist": "Zapp", "title": "Doo Wa Ditty (Blow That Thing)", "el": "Drums", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 149, "yt": "E58Kcvnhg_c", "q": "Zapp Doo Wa Ditty (Blow That Thing)", "ws": "https://www.whosampled.com/sample/777221/", "a": 1385, "e": 1535}, {"y": 1982, "d": 1980, "artist": "Beside", "title": "Change the Beat (Female Version)", "el": null, "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 221, "yt": null, "q": "Beside Change the Beat (Female Version)", "ws": "https://www.whosampled.com/sample/21420/", "a": 1401, "e": 1431}, {"y": 1974, "d": 1970, "artist": "James Brown", "title": "Funky President (People It's Bad)", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 4, "yt": "vIU63C8K7-8", "q": "James Brown Funky President (People It's Bad)", "ws": "https://www.whosampled.com/sample/12445/", "a": 1432, "e": 1444}, {"y": 1969, "d": 1960, "artist": "James Brown", "title": "Ain't It Funky Now", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 30, "yt": "hpNxRo6oboI", "q": "James Brown Ain't It Funky Now", "ws": "https://www.whosampled.com/sample/14647/", "a": 1444, "e": 1474}, {"y": 1980, "d": 1980, "artist": "Crash Crew", "title": "High Power Rap", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 373, "yt": null, "q": "Crash Crew High Power Rap", "ws": "https://www.whosampled.com/sample/21652/", "a": 1474, "e": 1477}, {"y": 1963, "d": 1960, "artist": "Hoyt Curtin", "title": "Magilla Gorilla", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 52, "yt": null, "q": "Hoyt Curtin Magilla Gorilla", "ws": "https://www.whosampled.com/sample/21423/", "a": 1477, "e": 1499}, {"y": 1973, "d": 1970, "artist": "Sweet", "title": "The Ballroom Blitz", "el": "Vocals / Lyrics", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 53, "yt": "z_jdiU47bFA", "q": "Sweet The Ballroom Blitz", "ws": "https://www.whosampled.com/sample/2322/", "a": 1499, "e": 1506}, {"y": 1981, "d": 1980, "artist": "Roger", "title": "So Ruff, So Tuff", "el": "Multiple Elements", "type": "unknown", "track": "Hey Ladies", "trackN": 8, "part": null, "srcAt": 223, "yt": "s90dqNfPDR0", "q": "Roger So Ruff, So Tuff", "ws": "https://www.whosampled.com/sample/1463/", "a": 1506, "e": 1535}, {"y": 1973, "d": 1970, "artist": "Eric Weissberg and Marshall Brickman", "title": "Shuckin' the Corn", "el": "Multiple Elements", "type": "direct", "track": "5-Piece Chicken Dinner", "trackN": 9, "part": null, "srcAt": 11, "yt": "WZ6CSkiQTgs", "q": "Eric Weissberg and Marshall Brickman Shuckin' the Corn", "ws": "https://www.whosampled.com/sample/2942/Beastie-Boys-5-Piece-Chicken-Dinner-Eric-Weissberg-Marshall-Brickman-Shuckin%27-the-Corn/", "a": 1535, "e": 1558}, {"y": 1973, "d": 1970, "artist": "Incredible Bongo Band", "title": "Last Bongo in Belgium", "el": "Drums", "type": "unknown", "track": "Looking Down the Barrel of a Gun", "trackN": 10, "part": null, "srcAt": 274, "yt": "z4ObD_OaPNQ", "q": "Incredible Bongo Band Last Bongo in Belgium", "ws": "https://www.whosampled.com/sample/2530/Beastie-Boys-Looking-Down-the-Barrel-of-a-Gun-Incredible-Bongo-Band-Last-Bongo-in-Belgium/", "a": 1558, "e": 1766}, {"y": 1970, "d": 1970, "artist": "Mountain", "title": "Mississippi Queen", "el": "Multiple Elements", "type": "unknown", "track": "Looking Down the Barrel of a Gun", "trackN": 10, "part": null, "srcAt": 10, "yt": "qEnF6EB-yMs", "q": "Mountain Mississippi Queen", "ws": "https://www.whosampled.com/sample/21555/Beastie-Boys-Looking-Down-the-Barrel-of-a-Gun-Mountain-Mississippi-Queen/", "a": 1669, "e": 1699}, {"y": 1982, "d": 1980, "artist": "Trouble Funk", "title": "Drop the Bomb", "el": "Multiple Elements", "type": "unknown", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 80, "yt": null, "q": "Trouble Funk Drop the Bomb", "ws": "https://www.whosampled.com/sample/21668/Beastie-Boys-Car-Thief-Trouble-Funk-Drop-the-Bomb/", "a": 1766, "e": 1985}, {"y": 1987, "d": 1980, "artist": "Boogie Down Productions", "title": "The Bridge Is Over", "el": null, "type": "unknown", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 0, "yt": null, "q": "Boogie Down Productions The Bridge Is Over", "ws": "https://www.whosampled.com/sample/1246856/Beastie-Boys-Car-Thief-Boogie-Down-Productions-The-Bridge-Is-Over/", "a": 1777, "e": 1985}, {"y": 1970, "d": 1970, "artist": "The Jackson 5", "title": "I'll Bet You", "el": "Hook / Riff", "type": "unknown", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 13, "yt": null, "q": "The Jackson 5 I'll Bet You", "ws": "https://www.whosampled.com/sample/620/Beastie-Boys-Car-Thief-The-Jackson-5-I%27ll-Bet-You/", "a": 1783, "e": 1787}, {"y": 1975, "d": 1970, "artist": "Funk Factory", "title": "Rien Ne Va Plus", "el": "Multiple Elements", "type": "unknown", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 13, "yt": "2aW6yTSvrdo", "q": "Funk Factory Rien Ne Va Plus", "ws": "https://www.whosampled.com/sample/373/Beastie-Boys-Car-Thief-Funk-Factory-Rien-Ne-Va-Plus/", "a": 1787, "e": 1985}, {"y": 1960, "d": 1960, "artist": "Jac Holzman", "title": "Car Skid and Crash", "el": "Sound FX / Other", "type": "unknown", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 5, "yt": null, "q": "Jac Holzman Car Skid and Crash", "ws": "https://www.whosampled.com/sample/1212748/Beastie-Boys-Car-Thief-Jac-Holzman-Car-Skid-and-Crash/", "a": 1812, "e": 1985}, {"y": 1970, "d": 1970, "artist": "Max Yasgur", "title": "Address to the Crowd", "el": "Vocals / Lyrics", "type": "direct", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 35, "yt": null, "q": "Max Yasgur Address to the Crowd", "ws": "https://www.whosampled.com/sample/21544/Beastie-Boys-Car-Thief-Max-Yasgur-Address-to-the-Crowd/", "a": 1846, "e": 1876}, {"y": 1968, "d": 1960, "artist": "Donovan", "title": "Hurdy Gurdy Man", "el": "Drums", "type": "unknown", "track": "Car Thief", "trackN": 11, "part": null, "srcAt": 63, "yt": "CHxfOZH8cew", "q": "Donovan Hurdy Gurdy Man", "ws": "https://www.whosampled.com/sample/21557/Beastie-Boys-Car-Thief-Donovan-Hurdy-Gurdy-Man/", "a": 1914, "e": 1944}, {"y": 1969, "d": 1960, "artist": "Led Zeppelin", "title": "Moby Dick", "el": "Drums", "type": "unknown", "track": "What Comes Around", "trackN": 12, "part": null, "srcAt": 0, "yt": "2N_xP67utPk", "q": "Led Zeppelin Moby Dick", "ws": "https://www.whosampled.com/sample/11012/Beastie-Boys-What-Comes-Around-Led-Zeppelin-Moby-Dick/", "a": 1985, "e": 1988}, {"y": 1971, "d": 1970, "artist": "Gene Harris and The Three Sounds", "title": "Put on Train", "el": "Multiple Elements", "type": "direct", "track": "What Comes Around", "trackN": 12, "part": null, "srcAt": 1, "yt": "R1BpsJdx0do", "q": "Gene Harris and The Three Sounds Put on Train", "ws": "https://www.whosampled.com/sample/1407/Beastie-Boys-What-Comes-Around-Gene-Harris-The-Three-Sounds-Put-on-Train/", "a": 1988, "e": 2172}, {"y": 1977, "d": 1970, "artist": "Alice Cooper", "title": "It's Hot Tonight", "el": "Hook / Riff", "type": "direct", "track": "What Comes Around", "trackN": 12, "part": null, "srcAt": 0, "yt": null, "q": "Alice Cooper It's Hot Tonight", "ws": "https://www.whosampled.com/sample/1408/Beastie-Boys-What-Comes-Around-Alice-Cooper-It%27s-Hot-Tonight/", "a": 2018, "e": 2048}, {"y": 1968, "d": 1960, "artist": "The Mohawks", "title": "The Champ", "el": "Vocals / Lyrics", "type": "unknown", "track": "What Comes Around", "trackN": 12, "part": null, "srcAt": 0, "yt": null, "q": "The Mohawks The Champ", "ws": "https://www.whosampled.com/sample/817497/Beastie-Boys-What-Comes-Around-The-Mohawks-The-Champ/", "a": 2119, "e": 2149}, {"y": 1977, "d": 1970, "artist": "Rose Royce", "title": "Do Your Dance", "el": "Multiple Elements", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 23, "yt": "quDdfh4SEf0", "q": "Rose Royce Do Your Dance", "ws": "https://www.whosampled.com/sample/21676/Beastie-Boys-Shadrach-Rose-Royce-Do-Your-Dance/", "a": 2173, "e": 2419}, {"y": 1974, "d": 1970, "artist": "Sly & the Family Stone", "title": "Loose Booty", "el": "Multiple Elements", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 62, "yt": null, "q": "Sly & the Family Stone Loose Booty", "ws": "https://www.whosampled.com/sample/2056/Beastie-Boys-Shadrach-Sly-%26-the-Family-Stone-Loose-Booty/", "a": 2181, "e": 2419}, {"y": 1970, "d": 1970, "artist": "James Brown", "title": "Funky Drummer (Pt. 1 & 2)", "el": "Drums", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 322, "yt": "AoQ4AtsFWVM", "q": "James Brown Funky Drummer (Pt. 1 & 2)", "ws": "https://www.whosampled.com/sample/10481/Beastie-Boys-Shadrach-James-Brown-Funky-Drummer-(Pt.-1-%26-2)/", "a": 2182, "e": 2419}, {"y": 1980, "d": 1980, "artist": "Sugarhill Gang", "title": "Sugarhill Groove", "el": "Hook / Riff", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 78, "yt": null, "q": "Sugarhill Gang Sugarhill Groove", "ws": "https://www.whosampled.com/sample/152946/Beastie-Boys-Shadrach-Sugarhill-Gang-Sugarhill-Groove/", "a": 2189, "e": 2191}, {"y": 1971, "d": 1970, "artist": "Black Oak Arkansas", "title": "Hot and Nasty", "el": "Drums", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 1, "yt": null, "q": "Black Oak Arkansas Hot and Nasty", "ws": "https://www.whosampled.com/sample/30997/Beastie-Boys-Shadrach-Black-Oak-Arkansas-Hot-and-Nasty/", "a": 2191, "e": 2419}, {"y": 1981, "d": 1980, "artist": "AC/DC", "title": "For Those About to Rock (We Salute You)", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 107, "yt": "8fPf6L0XNvM", "q": "AC/DC For Those About to Rock (We Salute You)", "ws": "https://www.whosampled.com/sample/21692/Beastie-Boys-Shadrach-ACDC-For-Those-About-to-Rock-(We-Salute-You)/", "a": 2205, "e": 2235}, {"y": 1970, "d": 1970, "artist": "Ballin' Jack", "title": "Never Let 'Em Say", "el": "Multiple Elements", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 21, "yt": "wV-NUs7cuew", "q": "Ballin' Jack Never Let 'Em Say", "ws": "https://www.whosampled.com/sample/22214/Beastie-Boys-Shadrach-Ballin%27-Jack-Never-Let-%27Em-Say/", "a": 2328, "e": 2356}, {"y": 1979, "d": 1970, "artist": "The Fatback Band feat. King Tim III", "title": "King Tim III (Personality Jock)", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 288, "yt": "ojQqAnlrW_M", "q": "The Fatback Band feat. King Tim III King Tim III (Personality Jock)", "ws": "https://www.whosampled.com/sample/21562/Beastie-Boys-Shadrach-The-Fatback-Band-King-Tim-III-King-Tim-III-(Personality-Jock)/", "a": 2356, "e": 2357}, {"y": 1983, "d": 1980, "artist": "Trouble Funk", "title": "Say What?", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 0, "yt": null, "q": "Trouble Funk Say What?", "ws": "https://www.whosampled.com/sample/30998/Beastie-Boys-Shadrach-Trouble-Funk-Say-What%3F/", "a": 2356, "e": 2364}, {"y": 1980, "d": 1980, "artist": "Funky 4 + 1", "title": "That's the Joint", "el": "Vocals / Lyrics", "type": "unknown", "track": "Shadrach", "trackN": 13, "part": null, "srcAt": 387, "yt": "OKbPzGUihG0", "q": "Funky 4 + 1 That's the Joint", "ws": "https://www.whosampled.com/sample/21681/Beastie-Boys-Shadrach-Funky-4-%2B-1-That%27s-the-Joint/", "a": 2364, "e": 2394}, {"y": 1971, "d": 1970, "artist": "Burundi Steiphenson Black", "title": "Burundi Black", "el": "Drums", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "59 Chrystie Street", "srcAt": 29, "yt": null, "q": "Burundi Steiphenson Black Burundi Black", "ws": "https://www.whosampled.com/sample/16049/", "a": 2430, "e": 2431}, {"y": 1967, "d": 1960, "artist": "Jimi Hendrix", "title": "Are You Experienced?", "el": "Hook / Riff", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "59 Chrystie Street", "srcAt": 37, "yt": null, "q": "Jimi Hendrix Are You Experienced?", "ws": "https://www.whosampled.com/sample/15909/", "a": 2430, "e": 2435}, {"y": 1978, "d": 1970, "artist": "Cerrone", "title": "Rocket in the Pocket (Live)", "el": "Vocals / Lyrics", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "59 Chrystie Street", "srcAt": 31, "yt": "ZqsxJgCz51U", "q": "Cerrone Rocket in the Pocket (Live)", "ws": "https://www.whosampled.com/sample/31101/", "a": 2435, "e": 2452}, {"y": 1986, "d": 1980, "artist": "Beastie Boys", "title": "Scenario", "el": "Vocals / Lyrics", "type": "interpolation", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "59 Chrystie Street", "srcAt": 46, "yt": null, "q": "Beastie Boys Scenario", "ws": "https://www.whosampled.com/sample/16108/", "a": 2452, "e": 2482}, {"y": 1987, "d": 1980, "artist": "Big Daddy Kane feat. Biz Markie", "title": "Just Rhymin' With Biz", "el": "Vocals / Lyrics", "type": "interpolation", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Get on the Mic", "srcAt": 101, "yt": "aB8BZIBrRVs", "q": "Big Daddy Kane feat. Biz Markie Just Rhymin' With Biz", "ws": "https://www.whosampled.com/sample/1116631/", "a": 2547, "e": 2549}, {"y": 1983, "d": 1980, "artist": "Lovebug Starski", "title": "Starski Live at the Disco Fever", "el": "Drums", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Get on the Mic", "srcAt": 1, "yt": "qcd-TNVJz5c", "q": "Lovebug Starski Starski Live at the Disco Fever", "ws": "https://www.whosampled.com/sample/14734/", "a": 2549, "e": 2562}, {"y": 1974, "d": 1970, "artist": "Southside Movement", "title": "Save the World", "el": "Multiple Elements", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Stop That Train", "srcAt": 0, "yt": null, "q": "Southside Movement Save the World", "ws": "https://www.whosampled.com/sample/14735/", "a": 2562, "e": 2681}, {"y": 1972, "d": 1970, "artist": "Scotty", "title": "Draw Your Brakes", "el": "Multiple Elements", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Stop That Train", "srcAt": 18, "yt": "pzL4G1KtwMc", "q": "Scotty Draw Your Brakes", "ws": "https://www.whosampled.com/sample/15912/", "a": 2602, "e": 2632}, {"y": 1975, "d": 1970, "artist": "Tower of Power", "title": "Ebony Jam", "el": "Drums", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A Year and a Day", "srcAt": 1, "yt": "Uena6ITZ6J0", "q": "Tower of Power Ebony Jam", "ws": "https://www.whosampled.com/sample/2693/", "a": 2681, "e": 2823}, {"y": 1973, "d": 1970, "artist": "The Isley Brothers", "title": "That Lady", "el": "Multiple Elements", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A Year and a Day", "srcAt": 20, "yt": "S1Mvy3E8P2U", "q": "The Isley Brothers That Lady", "ws": "https://www.whosampled.com/sample/6940/", "a": 2688, "e": 2823}, {"y": 1971, "d": 1970, "artist": "Dennis Coffey and The Detroit Guitar Band", "title": "Scorpio", "el": "Drums", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A Year and a Day", "srcAt": 72, "yt": "1ddq5h--wXs", "q": "Dennis Coffey and The Detroit Guitar Band Scorpio", "ws": "https://www.whosampled.com/sample/1503102/", "a": 2688, "e": 2823}, {"y": 1971, "d": 1970, "artist": "Led Zeppelin", "title": "When the Levee Breaks", "el": "Drums", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A Year and a Day", "srcAt": 0, "yt": "JM3fodiK9rY", "q": "Led Zeppelin When the Levee Breaks", "ws": "https://www.whosampled.com/sample/36596/", "a": 2697, "e": 2823}, {"y": 1980, "d": 1980, "artist": "Crash Crew", "title": "High Power Rap", "el": "Vocals / Lyrics", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A Year and a Day", "srcAt": 106, "yt": null, "q": "Crash Crew High Power Rap", "ws": "https://www.whosampled.com/sample/36591/", "a": 2805, "e": 2823}, {"y": 1944, "d": 1940, "artist": "John Battles, Cris Alexander and Adolph Green", "title": "New York, New York", "el": "Vocals / Lyrics", "type": "interpolation", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Hello Brooklyn", "srcAt": 129, "yt": null, "q": "John Battles, Cris Alexander and Adolph Green New York, New York", "ws": "https://www.whosampled.com/sample/112678/", "a": 2835, "e": 2865}, {"y": 1955, "d": 1950, "artist": "Johnny Cash", "title": "Folsom Prison Blues", "el": "Vocals / Lyrics", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Hello Brooklyn", "srcAt": 44, "yt": "AeZRYhLDLeU", "q": "Johnny Cash Folsom Prison Blues", "ws": "https://www.whosampled.com/sample/1724/", "a": 2909, "e": 2915}, {"y": 1974, "d": 1970, "artist": "The Meters", "title": "Hey Pocky A-Way", "el": "Multiple Elements", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Dropping Names", "srcAt": 0, "yt": "t2iBku54N0Q", "q": "The Meters Hey Pocky A-Way", "ws": "https://www.whosampled.com/sample/154933/", "a": 2915, "e": 2978}, {"y": 1974, "d": 1970, "artist": "Sweet", "title": "Into the Night", "el": "Drums", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Dropping Names", "srcAt": 375, "yt": "TCSXJSSKut8", "q": "Sweet Into the Night", "ws": "https://www.whosampled.com/sample/2692/", "a": 2928, "e": 2978}, {"y": 1974, "d": 1970, "artist": "The Crusaders", "title": "The Well's Gone Dry", "el": "Bass", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Dropping Names", "srcAt": 0, "yt": "Hwl2-r66kR0", "q": "The Crusaders The Well's Gone Dry", "ws": "https://www.whosampled.com/sample/2527/", "a": 2940, "e": 2978}, {"y": 1979, "d": 1970, "artist": "Good Day (TV show)", "title": "Bob Marley Interview", "el": "Dialogue", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Dropping Names", "srcAt": 866, "yt": null, "q": "Good Day (TV show) Bob Marley Interview", "ws": "https://www.whosampled.com/sample/168388/", "a": 2970, "e": 2978}, {"y": 1986, "d": 1980, "artist": "Trouble Funk", "title": "Good to Go", "el": "Multiple Elements", "type": "direct", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A.W.O.L.", "srcAt": 17, "yt": null, "q": "Trouble Funk Good to Go", "ws": "https://www.whosampled.com/sample/16444/", "a": 3148, "e": 3152}, {"y": 1974, "d": 1970, "artist": "Idris Muhammad", "title": "Loran's Dance", "el": "Multiple Elements", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A.W.O.L.", "srcAt": 13, "yt": "a9gdvyEF6M4", "q": "Idris Muhammad Loran's Dance", "ws": "https://www.whosampled.com/sample/16445/", "a": 3152, "e": 3187}], "unplaced": [{"y": 1969, "d": 1960, "artist": "Kool & the Gang", "title": "Let the Music Take Your Mind", "el": null, "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "Lay It on Me", "srcAt": null, "yt": "iJfKHFrpfzw", "q": "Kool & the Gang Let the Music Take Your Mind", "ws": null}, {"y": 1979, "d": 1970, "artist": "Chic", "title": "Good Times", "el": "Multiple Elements", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A.W.O.L.", "srcAt": null, "yt": null, "q": "Chic Good Times", "ws": null}, {"y": 1982, "d": 1980, "artist": "Malcolm McLaren", "title": "Buffalo Gals", "el": "Vocals / Lyrics", "type": "unknown", "track": "B-Boy Bouillabaisse", "trackN": 15, "part": "A.W.O.L.", "srcAt": null, "yt": "HCBN7lyLT4w", "q": "Malcolm McLaren Buffalo Gals", "ws": null}], "tracks": [{"n": 1, "title": "To All the Girls", "start": 0, "end": 89, "parts": null}, {"n": 2, "title": "Shake Your Rump", "start": 89, "end": 288, "parts": null}, {"n": 3, "title": "Johnny Ryall", "start": 288, "end": 468, "parts": null}, {"n": 4, "title": "Egg Man", "start": 468, "end": 645, "parts": null}, {"n": 5, "title": "High Plains Drifter", "start": 645, "end": 898, "parts": null}, {"n": 6, "title": "The Sounds of Science", "start": 898, "end": 1089, "parts": null}, {"n": 7, "title": "3-Minute Rule", "start": 1089, "end": 1308, "parts": null}, {"n": 8, "title": "Hey Ladies", "start": 1308, "end": 1535, "parts": null}, {"n": 9, "title": "5-Piece Chicken Dinner", "start": 1535, "end": 1558, "parts": null}, {"n": 10, "title": "Looking Down the Barrel of a Gun", "start": 1558, "end": 1766, "parts": null}, {"n": 11, "title": "Car Thief", "start": 1766, "end": 1985, "parts": null}, {"n": 12, "title": "What Comes Around", "start": 1985, "end": 2172, "parts": null}, {"n": 13, "title": "Shadrach", "start": 2172, "end": 2419, "parts": null}, {"n": 14, "title": "Ask For Janice", "start": 2419, "end": 2430, "parts": null}, {"n": 15, "title": "B-Boy Bouillabaisse", "start": 2430, "end": 3187, "parts": ["59 Chrystie Street", "Get on the Mic", "Stop That Train", "A Year and a Day", "Hello Brooklyn", "Dropping Names", "Lay It on Me", "Mike on the Mic", "A.W.O.L."]}], "trackShort": ["To All the Girls", "Shake Your Rump", "Johnny Ryall", "Egg Man", "High Plains Drifter", "The Sounds of Science", "3-Minute Rule", "Hey Ladies", "5-Piece Chicken Dinner", "Looking Down the Barrel of a Gun", "Car Thief", "What Comes Around", "Shadrach", "Ask For Janice", "", "", "", "", "", "", "", "", ""], "bands": [{"decade": 1980, "seconds": 871.0}, {"decade": 1970, "seconds": 2630.0}, {"decade": 1960, "seconds": 583.0}, {"decade": 1950, "seconds": 6.0}, {"decade": 1940, "seconds": 30.0}, {"decade": 1780, "seconds": 30.0}], "bandSecondsTotal": 4150.0, "totalSec": 3187, "notes": ["<b>Starts are facts; lengths are estimates.</b> Every strand's start is the position WhoSampled documents for that connection (122 of 125 connections carry one). No source anywhere publishes where a sample <i>ends</i>, so spans are drawn by a stated rule: a sample runs until the next documented sample enters, at most 30 seconds &mdash; or to the end of its track when WhoSampled marks it &ldquo;(and throughout)&rdquo;. Band heights are computed from those estimated spans.", "<b>Three connections have no published position</b> (Kool &amp; the Gang in &ldquo;Lay It on Me&rdquo;; Chic's &ldquo;Good Times&rdquo; and Malcolm McLaren's &ldquo;Buffalo Gals&rdquo; in &ldquo;A.W.O.L.&rdquo;). They are listed under their parts, unplaced &mdash; not guessed onto the chart.", "<b>One placement is disputed.</b> &ldquo;Buffalo Gals&rdquo; sits in &ldquo;A.W.O.L.&rdquo; as WhoSampled lists it; the Beastie Boys' own published sample list puts the quote in &ldquo;59 Chrystie Street&rdquo;. It is flagged here rather than silently moved.", "<b>One gap is admitted.</b> WhoSampled's &ldquo;Hey Ladies&rdquo; page implies ~21 connections; 17 could be verified. None were invented to close the gap. &ldquo;Ask for Janice&rdquo; genuinely samples nothing.", "<b>The audio is YouTube's, not ours.</b> The album plays from the official auto-generated uploads (Beastie Boys &ndash; Topic, &copy; Capitol/UMG), embedded and chained by this page &mdash; 23 videos, because &ldquo;B-Boy Bouillabaisse&rdquo; has no official full-length upload and exists officially only as its 9 parts. Nothing is hosted here. One sampled-song door (Bernard Herrmann's &ldquo;The Murder&rdquo;) leads to the 1997 Var&egrave;se Sarabande re-recording &mdash; the closest official upload; the 1960 film recording has none.", "<b>Credit:</b> sample documentation by the contributors of WhoSampled, cross-checked against the band's published sample list; timings treated as attributed facts, presentation original. An <i>All Day Anatomy</i> sibling &mdash; built by Mordecai, for Jimmy."]};
+const $=s=>document.querySelector(s);
+const fmt=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")};
+const SEG=DATA.segments, SAMPLES=DATA.samples, TOTAL=DATA.totalSec;
+const LIGHT=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches;
+const PALETTE={1780:"#cfc4a5",1940:"#8f7fbf",1950:"#c9a06a",1960:"#e07a5f",1970:"#f0b429",1980:"#5ec8b4",1990:"#7aa2f7",2000:"#b48be8"};
+const PALETTE_L={1780:"#8a7a4d",1950:"#a5763a",1970:"#d1930d",1980:"#2f9c86"};
+const dcol=d=>(LIGHT&&PALETTE_L[d])||PALETTE[d]||"#9b968a";
+const CSSV={}; (function(){ const cs=getComputedStyle(document.documentElement);
+  ["--band-a","--band-b","--head","--axis-ink","--panel"].forEach(k=>CSSV[k]=cs.getPropertyValue(k).trim()); })();
+const RM=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SCROLL_BEH=RM?"auto":"smooth";
+$("#clockTotal").textContent=fmt(TOTAL);
+
+/* ---------- YouTube chaining engine ---------- */
+let player=null, apiReady=false, apiLoaded=false, segIdx=0, isPlaying=false, started=false;
+let albumT=0, pendingSeek=null, scrubbing=false, scrubT=0;
+let wantPlay=false, directMode=false, directFrame=null; const failedSegs={};
+function setStatus(msg){ const el=$("#playStatus"); if(!el) return;
+  el.textContent=msg||""; el.style.display=msg?"block":"none"; }
+function segAt(t){ let lo=0,hi=SEG.length-1; while(lo<hi){ const mid=(lo+hi+1)>>1; if(SEG[mid].start<=t) lo=mid; else hi=mid-1; } return lo; }
+function cueSeg(i,off,play){ segIdx=i; const s=SEG[i]; if(!player||!apiReady) return;
+  try{
+    if(play) player.loadVideoById({videoId:s.vid,startSeconds:Math.max(0,off)});
+    else player.cueVideoById({videoId:s.vid,startSeconds:Math.max(0,off)});
+  }catch(err){ enterDirectMode(true); } }
+function seekTo(t,play){ t=Math.min(Math.max(0,t),TOTAL-0.3); const i=segAt(t); albumT=t;
+  const want=play===undefined?(isPlaying||wantPlay):play;
+  if(directMode){ segIdx=i; if(want||started) loadDirect(i,t-SEG[i].start,!!want); return; }
+  if(!apiReady||!player){ segIdx=i; pendingSeek=t; if(want) wantPlay=true; return; }
+  cueSeg(i,t-SEG[i].start,want); }
+/* Direct-embed fallback: a plain iframe embed needs no API script and no
+   postMessage handshake, so it still plays where the API player cannot.
+   YouTube error 153 means the embed request carried no HTTP Referer (or
+   equivalent identification), which YouTube has required since 2025: app
+   webviews in particular drop the Referer for script-created iframes.
+   So this embed identifies itself every way a page can: the iframe is
+   created with referrerpolicy="strict-origin-when-cross-origin" set
+   before its src, the page head carries the matching meta referrer
+   policy, and the URL carries origin + widget_referrer when the page
+   has a real http(s) origin. enablejsapi is deliberately omitted here
+   \u2014 with no API bridge listening, it is configuration YouTube can
+   reject \u2014 and no origin is claimed when the origin is opaque. */
+function embedURL(s,off,autoplay){ let u="https://www.youtube.com/embed/"+s.vid+
+  "?rel=0&playsinline=1&modestbranding=1&start="+Math.max(0,Math.floor(off));
+  if(location.origin&&location.origin.indexOf("http")===0){ const o=encodeURIComponent(location.origin);
+    u+="&origin="+o+"&widget_referrer="+o; }
+  if(autoplay) u+="&autoplay=1"; return u; }
+function loadDirect(i,off,autoplay){ segIdx=i; const vf=$("#videoframe"); if(!vf) return;
+  if(!directFrame){ directFrame=document.createElement("iframe"); directFrame.id="ytDirect";
+    directFrame.title="Paul's Boutique \u2014 YouTube player";
+    directFrame.setAttribute("referrerpolicy","strict-origin-when-cross-origin");
+    directFrame.setAttribute("allow","autoplay; encrypted-media; picture-in-picture");
+    directFrame.setAttribute("allowfullscreen","");
+    vf.appendChild(directFrame); }
+  directFrame.src=embedURL(SEG[i],off,autoplay); }
+function enterDirectMode(force,msg){ if(directMode) return; if(apiReady&&!force) return; directMode=true;
+  try{ if(player&&player.destroy) player.destroy(); }catch(err){}
+  player=null; apiReady=false;
+  const ph=$("#ytPlayer"); if(ph&&ph.tagName==="IFRAME") ph.remove();
+  setStatus(msg||"The YouTube player didn't respond, so this switched to a direct embed: tap the video itself to play or pause. Track buttons, the timeline and the chart still jump to the right moment \u2014 they reload the embed there.");
+  loadDirect(segIdx,Math.max(0,albumT-SEG[segIdx].start),wantPlay); }
+window.onYouTubeIframeAPIReady=function(){
+  if(directMode) return; apiLoaded=true;
+  const pv={rel:0,playsinline:1,disablekb:1,modestbranding:1};
+  if(location.origin&&location.origin.indexOf("http")===0){ pv.origin=location.origin; pv.widget_referrer=location.origin; }
+  try{
+    player=new YT.Player("ytPlayer",{width:640,height:360,playerVars:pv,
+      events:{onReady:function(){ apiReady=true; setStatus("");
+          if(pendingSeek!=null){ const t=pendingSeek; pendingSeek=null; seekTo(t,wantPlay); }
+          else cueSeg(segIdx,Math.max(0,albumT-SEG[segIdx].start),wantPlay);
+          if(wantPlay) started=true;
+        },
+        onStateChange:function(e){
+          if(e.data===YT.PlayerState.ENDED){
+            if(segIdx<SEG.length-1){ cueSeg(segIdx+1,0,true); }
+            else { isPlaying=false; syncBtn(); }
+          } else if(e.data===YT.PlayerState.PLAYING){ isPlaying=true; setStatus(""); syncBtn(); }
+          else if(e.data===YT.PlayerState.PAUSED){ isPlaying=false; syncBtn(); }
+        },
+        onError:function(e){ const code=e&&e.data; failedSegs[segIdx]=code;
+          isPlaying=false; syncBtn();
+          if(code===153){
+            enterDirectMode(true,"YouTube couldn't identify the embedded player (error 153 \u2014 it requires the embedding page to identify itself), so this switched to a direct embed that sends that identification: tap the video itself to play or pause. Track buttons, the timeline and the chart still jump to the right moment \u2014 they reload the embed there.");
+          } else if((code===100||code===101||code===150)&&segIdx<SEG.length-1&&!failedSegs[segIdx+1]){
+            setStatus("YouTube wouldn't play \u201C"+DATA.tracks[SEG[segIdx].trackN-1].title+"\u201D in the embedded player (error "+code+") \u2014 skipping to the next track. The link under the player opens it on YouTube.");
+            cueSeg(segIdx+1,0,true);
+          } else {
+            setStatus("YouTube reported an error ("+code+") for this video. The link under the player opens it on YouTube.");
+          }
+        }}});
+  }catch(err){ enterDirectMode(true); return; }
+  setTimeout(function(){ if(!apiReady) enterDirectMode(); },8000);
+};
+(function(){ const tag=document.createElement("script");
+  tag.src="https://www.youtube.com/iframe_api";
+  tag.onerror=function(){ enterDirectMode(); };
+  document.head.appendChild(tag);
+  setTimeout(function(){ if(!apiLoaded&&!apiReady) enterDirectMode(); },9000);
+})();
+function syncBtn(){ $("#playBtn").innerHTML=isPlaying?"&#10073;&#10073;":"&#9654;"; }
+$("#playBtn").addEventListener("click",function(){
+  if(directMode){ started=true; isPlaying=true; syncBtn();
+    loadDirect(segAt(albumT),Math.max(0,albumT-SEG[segAt(albumT)].start),true);
+    setStatus("Playing through the direct embed \u2014 the video's own controls pause and resume.");
+    return; }
+  if(!apiReady||!player){ wantPlay=true; started=true;
+    setStatus("Warming up the player\u2026 if it doesn't start in a few seconds, tap the video itself.");
+    return; }
+  setStatus("");
+  if(!started){ started=true; cueSeg(segIdx, Math.max(0,albumT-SEG[segIdx].start), true); return; }
+  try{ if(isPlaying) player.pauseVideo(); else player.playVideo(); }catch(err){ enterDirectMode(true); }
+});
+(function(){ const m=/[?&]t=([0-9:]+)/.exec(location.search); if(m){ const p=m[1].split(":").map(Number);
+  pendingSeek=p.length===2?p[0]*60+p[1]:p[0]; albumT=pendingSeek; } })();
+
+/* ---------- transport / seekbar ---------- */
+const seekbar=$("#seekbar");
+(function(){ let lastLabX=-1e9; const minGap=innerWidth<760?9999:110;
+  SEG.forEach((s,i)=>{ if(i===0) return; const x=(s.start/TOTAL*100);
+  const t=document.createElement("div"); t.className="tick"; t.style.left=x+"%"; seekbar.appendChild(t);
+  const name=DATA.trackShort[i]||""; if(!name) return;
+  const px=x/100*(seekbar.clientWidth||innerWidth);
+  if(px-lastLabX<minGap) return; lastLabX=px;
+  const lab=document.createElement("div"); lab.className="ticklab"; lab.style.left=x+"%";
+  if(x<9){ lab.style.left="0"; lab.style.transform="none"; }
+  else if(x>91){ lab.style.left="auto"; lab.style.right="0"; lab.style.transform="none"; }
+  lab.textContent=name; seekbar.appendChild(lab); }); })();
+let seekDrag=false;
+function seekPos(ev){ const r=seekbar.getBoundingClientRect(); return Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))*TOTAL; }
+seekbar.addEventListener("pointerdown",ev=>{ seekDrag=true; seekbar.setPointerCapture(ev.pointerId); scrubbing=true; scrubT=seekPos(ev); });
+seekbar.addEventListener("pointermove",ev=>{ if(seekDrag) scrubT=seekPos(ev); });
+seekbar.addEventListener("pointerup",ev=>{ if(!seekDrag) return; seekDrag=false; scrubbing=false; started=true; seekTo(scrubT); });
+
+/* ---------- braid chart ---------- */
+const cv=$("#chart"), ctx=cv.getContext("2d");
+let bands=[], strandPos=new Map(), chartH=480, hoverSample=null, decadeFilter=null;
+function layout(){
+  const W=cv.clientWidth; chartH=W<640?430:480;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=W*dpr; cv.height=chartH*dpr; cv.style.height=chartH+"px"; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const axisH=24, usable=chartH-axisH, n=DATA.bands.length;
+  const floorH=20, rest=usable-floorH*n;
+  let y=4; bands=DATA.bands.map(b=>{ const h=floorH+rest*(b.seconds/DATA.bandSecondsTotal);
+    const o={decade:b.decade,y0:y,y1:y+h}; y+=h+3; return o; });
+  strandPos.clear();
+  bands.forEach(bd=>{
+    const list=SAMPLES.filter(s=>s.d===bd.decade).sort((a,b)=>a.a-b.a);
+    const lanes=[]; // end time per lane
+    list.forEach(s=>{ let li=lanes.findIndex(e=>e<=s.a); if(li<0){ lanes.push(s.e); li=lanes.length-1; } else lanes[li]=s.e;
+      s._lane=li; });
+    const nl=Math.max(1,lanes.length), bh=bd.y1-bd.y0;
+    list.forEach(s=>{ const lh=bh/nl; s._y=bd.y0+lh*(s._lane+0.5); s._th=Math.max(2,Math.min(7,lh*0.52)); s._band=bd; });
+  });
+}
+const X=t=>10+(t/TOTAL)*(cv.clientWidth-20);
+function draw(){
+  const W=cv.clientWidth; if(!W) return; if(!bands.length) layout();
+  ctx.clearRect(0,0,W,chartH);
+  bands.forEach((bd,i)=>{ ctx.fillStyle=i%2?(CSSV["--band-b"]||"rgba(255,255,255,0.022)"):(CSSV["--band-a"]||"rgba(255,255,255,0.045)");
+    ctx.fillRect(0,bd.y0,W,bd.y1-bd.y0); });
+  SAMPLES.forEach(s=>{ if(s._y===undefined) return;
+    const dim=decadeFilter&&s.d!==decadeFilter;
+    const active=albumT>=s.a&&albumT<s.e;
+    ctx.strokeStyle=dcol(s.d); ctx.globalAlpha=dim?0.10:(active?1:0.78);
+    ctx.lineWidth=active?s._th+2.5:s._th; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(X(s.a),s._y); ctx.lineTo(Math.max(X(s.a)+2,X(s.e)),s._y); ctx.stroke();
+    ctx.globalAlpha=1; });
+  bands.forEach((bd,i)=>{ const pct=Math.round(DATA.bands[i].seconds/DATA.bandSecondsTotal*100);
+    const label=bd.decade+"s · "+pct+"%";
+    ctx.font="700 11px ui-sans-system,sans-serif";
+    const tw=ctx.measureText(label).width;
+    ctx.fillStyle=CSSV["--panel"]||"#141419"; ctx.globalAlpha=0.88;
+    ctx.fillRect(8,bd.y0+3,tw+10,16); ctx.globalAlpha=1;
+    ctx.fillStyle=dcol(bd.decade); ctx.fillText(label,13,bd.y0+15); });
+  const px=X(scrubbing?scrubT:albumT);
+  ctx.strokeStyle=CSSV["--head"]||"#fff"; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,chartH-20); ctx.stroke();
+  ctx.fillStyle=CSSV["--head"]||"#fff"; ctx.beginPath(); ctx.moveTo(px-5,0); ctx.lineTo(px+5,0); ctx.lineTo(px,7); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=CSSV["--axis-ink"]||"rgba(236,231,221,0.55)"; ctx.font="11px ui-sans-system,sans-serif";
+  for(let m=0;m<=TOTAL;m+=300){ ctx.fillText(fmt(m),X(m)-10,chartH-6); }
+}
+let chartDrag=false, chartMoved=false;
+function chartTime(ev){ const r=cv.getBoundingClientRect(); return Math.min(1,Math.max(0,(ev.clientX-r.left-10)/(r.width-20)))*TOTAL; }
+cv.addEventListener("pointerdown",ev=>{ chartDrag=true; chartMoved=false; cv.setPointerCapture(ev.pointerId); });
+cv.addEventListener("pointermove",ev=>{
+  if(chartDrag){ const t=chartTime(ev); if(Math.abs(t-albumT)>1.2) chartMoved=true; scrubbing=true; scrubT=t; hideTip(); return; }
+  const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top;
+  let best=null;
+  for(const s of SAMPLES){ if(s._y===undefined) continue; if(decadeFilter&&s.d!==decadeFilter) continue;
+    if(mx>=X(s.a)-3&&mx<=X(s.e)+3&&Math.abs(my-s._y)<=Math.max(6,s._th)) { if(!best||(s.e-s.a)<(best.e-best.a)) best=s; } }
+  hoverSample=best;
+  if(best) showTip(ev,best); else hideTip();
+  cv.style.cursor=best?"pointer":"crosshair";
+});
+cv.addEventListener("pointerup",ev=>{ if(!chartDrag) return; chartDrag=false; scrubbing=false; started=true; seekTo(chartTime(ev)); });
+cv.addEventListener("pointerleave",()=>{ hideTip(); });
+const tip=$("#tooltip");
+function showTip(ev,s){ tip.style.display="block";
+  tip.innerHTML='<span class="tt-a">'+s.artist+" — "+s.title+'</span><br><span class="tt-m">'+
+    s.y+" · "+s.d+"s · in &ldquo;"+s.track+"&rdquo;"+(s.part?" · "+s.part:"")+" at "+fmt(s.a)+
+    (s.el?" · "+s.el:"")+(s.type==="interpolation"?" · interpolation":"")+"</span>";
+  const w=290; let x=ev.clientX+14, y=ev.clientY+14; if(x+w>innerWidth) x=ev.clientX-w-8; if(y+90>innerHeight) y=ev.clientY-96;
+  tip.style.left=x+"px"; tip.style.top=y+"px"; }
+function hideTip(){ tip.style.display="none"; }
+
+/* ---------- decade chips ---------- */
+(function(){ const box=$("#decadeChips");
+  const mk=(label,val,color)=>{ const b=document.createElement("button"); b.className="chip"+(val===null?" on":"");
+    b.textContent=label; if(color&&val!==null) b.dataset.c=color;
+    b.addEventListener("click",()=>{ decadeFilter=val; box.querySelectorAll(".chip").forEach(c=>{ c.classList.remove("on"); c.style.background=""; });
+      b.classList.add("on"); if(color) b.style.background=color; draw(); });
+    box.appendChild(b); };
+  mk("All decades",null);
+  DATA.bands.forEach(b=>mk(b.decade+"s",b.decade,dcol(b.decade)));
+})();
+
+/* ---------- right now ---------- */
+let lastRNKey=null;
+function renderRN(t){
+  const act=SAMPLES.filter(s=>t>=s.a&&t<s.e);
+  const key=act.map(s=>s.a).join(","); if(key===lastRNKey) return; lastRNKey=key;
+  const box=$("#rnCards"); box.innerHTML="";
+  if(!act.length){ box.innerHTML='<div class="empty">No documented sample under the needle right here &mdash; this stretch is the Beasties themselves (and whatever lives between the cracks of the record).</div>'; return; }
+  act.forEach(s=>{ const c=document.createElement("div"); c.className="card"; c.style.boxShadow="inset 4px 0 0 "+dcol(s.d);
+    c.innerHTML='<div class="c-artist">'+s.artist+'</div><div class="c-title">&ldquo;'+s.title+'&rdquo; ('+s.y+")</div>"+
+      '<div class="c-meta">in &ldquo;'+s.track+"&rdquo;"+(s.part?" · "+s.part:"")+" · enters "+fmt(s.a)+
+      (s.el?"<br>element: "+s.el:"")+(s.type==="interpolation"?'<span class="badge interp">interpolation</span>':"")+
+      (s.srcAt!=null?"<br>you hear it at "+fmt(s.srcAt)+" in the source":"")+"</div>"+
+      '<div class="c-links"><a target="_blank" rel="noopener" href="'+(s.yt?("https://www.youtube.com/watch?v="+s.yt):("https://www.youtube.com/results?search_query="+encodeURIComponent(s.q)))+'">YouTube</a>'+
+      '<a target="_blank" rel="noopener" href="'+s.ws+'">WhoSampled</a></div>';
+    box.appendChild(c); });
+}
+
+/* ---------- track list ---------- */
+(function(){ const host=$("#trackList");
+  DATA.tracks.forEach(tr=>{ const blk=document.createElement("div"); blk.className="trackblock";
+    let html='<div class="trackhead"><span class="th-name">'+tr.n+". "+tr.title+'</span><span class="th-win">'+fmt(tr.start)+" – "+fmt(tr.end)+"</span></div>";
+    const parts=tr.parts&&tr.parts.length?tr.parts:[null];
+    parts.forEach(pn=>{ if(pn) html+='<div class="parthead">'+pn+"</div>";
+      SAMPLES.filter(s=>s.trackN===tr.n&&(pn?s.part===pn:!s.part)).forEach(s=>{
+        html+='<div class="lrow" data-t="'+s.a+'"><span class="l-time">'+fmt(s.a)+'</span><span class="l-src"><span class="l-artist">'+
+          s.artist+'</span> — &ldquo;'+s.title+'&rdquo;'+(s.type==="interpolation"?'<span class="badge interp">interpolation</span>':"")+'</span>'+
+          '<span class="l-meta">'+s.y+(s.el?" · "+s.el:"")+'</span><a class="l-yt" target="_blank" rel="noopener" href="'+
+          (s.yt?("https://www.youtube.com/watch?v="+s.yt):("https://www.youtube.com/results?search_query="+encodeURIComponent(s.q)))+'">YouTube</a></div>'; });
+      DATA.unplaced.filter(u=>u.trackN===tr.n&&(pn?u.part===pn:!u.part)).forEach(u=>{
+        html+='<div class="unplaced"><b>'+u.artist+'</b> — &ldquo;'+u.title+'&rdquo; ('+u.y+") · documented in this "+
+          (pn?"part":"track")+", but its position was never published &mdash; listed here, not placed on the chart."+
+          ' <a target="_blank" rel="noopener" href="'+(u.yt?("https://www.youtube.com/watch?v="+u.yt):("https://www.youtube.com/results?search_query="+encodeURIComponent(u.q)))+'">YouTube</a></div>'; });
+    });
+    blk.innerHTML=html; host.appendChild(blk); });
+  host.querySelectorAll(".lrow").forEach(r=>r.addEventListener("click",ev=>{ if(ev.target.tagName==="A") return;
+    started=true; seekTo(parseFloat(r.dataset.t),true); window.scrollTo({top:0,behavior:SCROLL_BEH}); }));
+})();
+
+/* ---------- artist search ---------- */
+$("#artistSearch").addEventListener("input",function(){
+  const q=this.value.trim().toLowerCase(), box=$("#searchResults"); box.innerHTML=""; if(q.length<2) return;
+  const hits=SAMPLES.filter(s=>(s.artist+" "+s.title).toLowerCase().includes(q)).slice(0,12);
+  hits.forEach(s=>{ const r=document.createElement("div"); r.className="srow";
+    r.innerHTML='<span class="s-time">'+fmt(s.a)+'</span><span><b>'+s.artist+'</b> — &ldquo;'+s.title+'&rdquo; ('+s.y+')</span><span class="s-meta">in &ldquo;'+s.track+'&rdquo;</span>';
+    r.addEventListener("click",()=>{ started=true; seekTo(s.a,true); window.scrollTo({top:0,behavior:SCROLL_BEH}); });
+    box.appendChild(r); });
+});
+
+/* ---------- footer / honesty ---------- */
+$("#honesty").innerHTML=DATA.notes.map(n=>"<p>"+n+"</p>").join("");
+
+/* ---------- main loop ---------- */
+let lastWatchKey=null;
+function render(){
+  const t=scrubbing?scrubT:albumT;
+  $("#clockNow").textContent=fmt(t);
+  const pct=(t/TOTAL*100)+"%"; $("#seekFill").style.width=pct; $("#seekHead").style.left=pct;
+  const seg=SEG[segIdx];
+  $("#ntName").textContent=scrubbing?DATA.tracks[segAt(t)].title:DATA.tracks[seg.trackN-1].title;
+  $("#ntPart").textContent=seg.part?("· "+seg.part):"";
+  const wk=segIdx+"@"+Math.floor(Math.max(0,t-seg.start));
+  if(wk!==lastWatchKey){ lastWatchKey=wk;
+    $("#ytWatch").href="https://www.youtube.com/watch?v="+seg.vid+"&t="+Math.floor(Math.max(0,t-seg.start))+"s"; }
+  renderRN(t); draw();
+}
+setInterval(function(){
+  if(player&&apiReady&&!directMode&&player.getCurrentTime){ try{ const ct=player.getCurrentTime();
+    if(typeof ct==="number"&&!scrubbing) albumT=SEG[segIdx].start+ct; }catch(err){} }
+  render();
+},200);
+addEventListener("resize",()=>{ bands=[]; layout(); draw(); });
+layout(); draw(); render();
+</script>
+</body>
+</html>
